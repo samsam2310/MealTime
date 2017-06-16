@@ -9,10 +9,12 @@ from __future__ import absolute_import, print_function, unicode_literals
 from .handler import route
 
 import os
+import logging
 
 from tornado.ioloop import IOLoop
 from tornado.web import Application
 from tornado.httpserver import HTTPServer
+from datetime import datetime
 
 
 def make_app():
@@ -29,12 +31,16 @@ LISTEN_PORT	= int(os.environ.get('LISTEN_PORT', 8000))
 UNIX_SOCKET	= os.environ.get('UNIX_SOCKET', '')
 
 if __name__ == '__main__':
-	make_app().listen(PORT, xheaders=True)
 	application = make_app()
+	server_info = ''
 	if UNIX_SOCKET:
 		server = HTTPServer(application)
 		socket = bind_unix_socket(UNIX_SOCKET)
 		server.add_socket(socket)
+		server_info = 'Server(%s)' % UNIX_SOCKET
 	else:
-		application.listen(PORT, xheaders=True)
-	tornado.ioloop.IOLoop.instance().start()
+		application.listen(LISTEN_PORT, xheaders=True)
+		server_info = 'Server(Port: %d)' % LISTEN_PORT
+	logging.info('%s start at %s' % (server_info, str(datetime.now()) ) )
+	IOLoop.instance().start()
+	logging.info('%s top at %s' % (server_info, str(datetime.now()) ) )
