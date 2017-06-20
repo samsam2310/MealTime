@@ -6,7 +6,7 @@
 ### group
 
 * new name information_list
-* delete id
+* del id
 * join id information_list
 * quit id
 

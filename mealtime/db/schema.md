@@ -1,7 +1,6 @@
 # User
 
 * uid: fb uid
-* name: fb name
 * cmd[]: the current cmd and args.
 * error_count: int, the times of error input to the cmd.
 
