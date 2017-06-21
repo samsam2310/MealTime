@@ -10,6 +10,15 @@ import os
 import requests
 
 
-FB_APP_ID = os.environ.get('FB_APP_ID', '')
-FB_APP_SECRET = os.environ.get('FB_APP_SECRET', '')
+# FB_APP_ID = os.environ.get('FB_APP_ID', '')
+# FB_APP_SECRET = os.environ.get('FB_APP_SECRET', '')
 FB_TOKEN = os.environ.get('FB_TOKEN', '')
+
+FB_API_URL = 'https://graph.facebook.com/v2.6/me/messages?access_token=%s' % FB_TOKEN
+
+def send(data):
+	json_data = json.dumps(data)
+	req = requests.post(
+			FB_API_URL,
+			headers={"Content-Type": "application/json"},
+			data=json_data)
