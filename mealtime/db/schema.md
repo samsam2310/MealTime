@@ -24,15 +24,17 @@
 
 * _id: id of menu
 * gid: _id of the group the menu belone to.
-* items[{ name, price(number), ops[] }]: the menu items.
+* name: name of menu
+* items[{ name, price(number), opidxs[] }]: the menu items.
 * ops[{ name, price(number) }]: the options for the items of the menu.
-* addi[{ name, price(number) }]: the additional options for all the items of the menu.
+* addis[{ name, price(number) }]: the additional options for all the items of the menu.
 
 # Meal
 
 * _id: id of the meal.
 * gid: _id of the group.
 * menu_id: _id of the menu.
+* owner: uid of owner.
 * start_time: time.
 * stop_time: time.
 * meal_time: time.
