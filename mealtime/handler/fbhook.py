@@ -14,7 +14,7 @@ import logging
 
 from .base import BaseApiHandler
 from ..db import get_db
-from ..util.mealcmd import MealCmd
+from ..utils.mealcmd import MealCmd
 
 
 FB_WEBHOOK_TOKEN = os.environ.get('FB_WEBHOOK_TOKEN', '')
@@ -56,7 +56,7 @@ class FBWebHookHandler(BaseApiHandler):
 			entry = data['entry'][0]
 			logging.info('Got entry(PageId: %s)' % entry['id'])
 			for m in entry.get('messaging', []):
-				if m.get('message', None)
+				if m.get('message', None):
 					self.handleMessage(m)
 				# else: Not message webhook.
 
@@ -64,8 +64,9 @@ class FBWebHookHandler(BaseApiHandler):
 	def handleMessage(self, message):
 		# TODO: A message(same mid) only be handle once.
 		uid = message['sender']['id']
-		cmd_obj = MealCmd(uid)
+		cmd_obj = MealCmd(uid, self._db)
 		text = message['message'].get('text', None)
 		if text:
+			logging.info('Got: %s' % text)
 			cmd_obj.parse(text)
 		# else: Not a text message(maybe like img or something else).

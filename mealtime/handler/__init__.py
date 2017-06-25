@@ -15,7 +15,6 @@ class DefaultHandler(BaseApiHandler):
 		self.write_success({'message': 'hi!'})
 
 
-
 route = [
         (r'/', DefaultHandler),
         (r'/fbhook', FBWebHookHandler)

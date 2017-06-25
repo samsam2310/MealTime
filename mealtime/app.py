@@ -17,18 +17,21 @@ from tornado.httpserver import HTTPServer
 from datetime import datetime
 
 
+DEBUG_MODE = bool(os.environ.get('DEBUG_MODE', ''))
+LISTEN_PORT	= int(os.environ.get('LISTEN_PORT', 8000))
+UNIX_SOCKET	= os.environ.get('UNIX_SOCKET', '')
+
+if DEBUG_MODE:
+	logging.basicConfig(level=logging.DEBUG)
+
 def make_app():
 	return Application(
 		handlers = route,
 		template_path = os.path.join(os.path.dirname(__file__), 'template'),
 		static_path = os.path.join(os.path.dirname(__file__), 'static'),
-		debug = os.environ.get('DEBUG_MODE', '') == 'True',
+		debug = DEBUG_MODE,
 		autoreload = False
 	)
-
-
-LISTEN_PORT	= int(os.environ.get('LISTEN_PORT', 8000))
-UNIX_SOCKET	= os.environ.get('UNIX_SOCKET', '')
 
 if __name__ == '__main__':
 	application = make_app()
