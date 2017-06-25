@@ -34,3 +34,24 @@ def fbSendMessage(uid, message):
 		}
 	}
 	fbRequestPost(FB_SEND_API_URL, data)
+
+def fbSendHaveRead(uid):
+	data = {
+		'recipient': {
+			'id': uid
+		},
+		'sender_action': 'mark_seen'
+	}
+	fbRequestPost(FB_SEND_API_URL, data)
+
+def fbSendShippingUpdate(uid, message):
+	data = {
+		'recipient': {
+			'id': uid
+		},
+		'message': {
+			'text': message
+		},
+		'tag': 'SHIPPING_UPDATE'
+	}
+	fbRequestPost(FB_SEND_API_URL, data)

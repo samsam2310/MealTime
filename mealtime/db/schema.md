@@ -22,6 +22,7 @@
 * start_time: time.
 * stop_time: time.
 * meal_time: time.
+* isDone(Boolean): is active or not.
 
 # Order
 

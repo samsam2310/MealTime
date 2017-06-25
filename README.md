@@ -15,11 +15,16 @@
 
 ## meal
 
-* new menu_idx start_time stop_time meal_time info_titles...
+* new menu_idx start_time stop_time meal_time info_titles... $
 	* time_format: 2017-09-10-13:15
 * show meal_idx
-* done meal_idx
+* done meal_idx message message ... $
 
 ### order
 
-* meal_id info_list ... $ item_idx op op op ... $ addi addi addi ... $ message message ...
+* meal_id info_list ... $ item_idx op op op ... $ addi addi addi ... $ message message ... $
+
+### myorder
+
+* show meal_idx
+* del meal_idx
