@@ -11,6 +11,8 @@ import json
 import hashlib
 import hmac
 import logging
+import base64
+import binascii
 
 from .base import BaseApiHandler
 from ..db import get_db
@@ -58,7 +60,8 @@ class FBWebHookHandler(BaseApiHandler):
 			for m in entry.get('messaging', []):
 				if m.get('message', None):
 					self.handleMessage(m)
-				# else: Not message webhook.
+				elif m.get('referral', None):
+					self.handleReferral(m)
 
 	# Assert 'message' is a message webhook obj.
 	def handleMessage(self, message):
@@ -67,6 +70,18 @@ class FBWebHookHandler(BaseApiHandler):
 		cmd_obj = MealCmd(uid, self._db)
 		text = message['message'].get('text', None)
 		if text:
-			logging.info('Got: %s' % text)
+			logging.info('Got: %s (From Id: %s)' % (text, uid))
 			cmd_obj.parse(text)
 		# else: Not a text message(maybe like img or something else).
+
+	# Assert 'referral' is a referral webhook obj.
+	def handleReferral(self, referral):
+		uid = referral['sender']['id']
+		cmd_obj = MealCmd(uid, self._db)
+		ref_data = referral['referral']['ref']
+		try:
+			rel_str = base64.urlsafe_b64decode(ref_data).decode()
+			logging.info('Got(m.me base64): %s (From Id: %s)' % (rel_str, uid))
+			cmd_obj.parse(rel_str, is_start_new=True)
+		except binascii.Error:
+			logging.info('Got(m.me raw): %s (From Id: %s)' % (ref_data, uid))

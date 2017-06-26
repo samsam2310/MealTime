@@ -8,12 +8,15 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import json
+import base64
 import requests
 
 
 # FB_APP_ID = os.environ.get('FB_APP_ID', '')
 # FB_APP_SECRET = os.environ.get('FB_APP_SECRET', '')
 FB_TOKEN = os.environ.get('FB_TOKEN', '')
+FB_PAGE_NAME = os.environ.get('FB_PAGE_NAME', '')
+
 
 def fbRequestPost(url, data):
 	json_data = json.dumps(data)
@@ -55,3 +58,11 @@ def fbSendShippingUpdate(uid, message):
 		'tag': 'SHIPPING_UPDATE'
 	}
 	fbRequestPost(FB_SEND_API_URL, data)
+
+FB_MME_URL = 'http://m.me/%s' % FB_PAGE_NAME
+def fbGetMMeLink(ref = ''):
+	url = FB_MME_URL
+	if ref:
+		enc_data = base64.urlsafe_b64encode(ref.encode()).decode()
+		url += '?ref=%s' % enc_data
+	return url

@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
 
-from .fb_api import fbSendMessage, fbSendHaveRead, fbSendShippingUpdate
+from .fb_api import fbSendMessage, fbSendHaveRead, fbSendShippingUpdate, fbGetMMeLink
 
 
 class MealCmd():	
@@ -60,9 +60,9 @@ class MealCmd():
 		self._clear_tag = True
 
 	CMD = ['meal', 'menu', 'order']
-	def parse(self, cmd_str):
+	def parse(self, cmd_str, is_start_new=False):
 		new_cmd = cmd_str.split()
-		arg = self._user['cmd'] + new_cmd
+		arg = self._user['cmd'] + new_cmd if not is_start_new else new_cmd
 		subcmd = arg[0] if arg else ''
 		if self._user['cmd'] and not new_cmd:
 			self.sendWrongFormat('Blank input.')
@@ -173,7 +173,9 @@ class MealCmd():
 		menu = self.getMenu(arg, 0)
 		if not menu:
 			return
-		# TODO : keep the data integrity
+		if self._db['Meal'].find({'isDone': False, 'menu_id': menu['_id']}).count() != 0:
+			self.sendError('There are some meal still using this menu, complete them before delete this menu.')
+			return
 		self._db['Menu'].delete_one({'_id': menu['_id']})
 		self.sendSuccess('Menu "%s" deleted.' % menu['name'])
 
@@ -246,7 +248,7 @@ class MealCmd():
 	# ------------------------------------------------------
 	# Meal
 	# ------------------------------------------------------
-	CMD_MEAL = ['new', 'show', 'done']
+	CMD_MEAL = ['new', 'show', 'done', 'del']
 	def meal(self, arg):
 		subcmd = arg[0] if arg else ''
 		if subcmd in self.CMD_MEAL:
@@ -326,8 +328,10 @@ class MealCmd():
 				'meal_time': meal_time,
 				'isDone': False
 			})
-		self.sendSuccess('Meal created. id: %s\nStart at: %s\nStop at: %s\nMeal time: %s\nInformations list: %s' % (
+		self.sendMessage('Meal created. id: %s\nStart at: %s\nStop at: %s\nMeal time: %s\nInformations list: %s\nPeople can order the meal by this link:' % (
 			res.inserted_id, arg[1], arg[2], arg[3], ' '.join(info_titles) ))
+		self.sendSuccess(fbGetMMeLink('order %s' % res.inserted_id))
+
 
 	def meal_show(self, arg):
 		meal = self.getMeal(arg, 0)
@@ -344,24 +348,36 @@ class MealCmd():
 		meal_str += 'Informations list: %s' % ' '.join(meal['infos'])
 		self.sendSuccess(meal_str)
 
-	def meal_done(self, arg):
+	def meal_done(self, arg, is_del=False):
 		meal = self.getMeal(arg, 0)
 		if not meal:
 			return
 
-		message_list = arg[1:]
+		arr = arg[1:]
+		if not arr:
+			self.sendMessage('Enter any other comments(Enter single "$" if no comments.):')
+			return
+		message_list, arr = self.getSplitList(arr)
 		ann = ' '.join(message_list) if message_list else 'None.'
 
 		self._db['Meal'].update_one({'_id': meal['_id']}, {'$set': {'isDone': True}})
-		self.sendSuccess('Meal(id: %s) is done.\nNotify all subscribers.' % meal['_id'])
+		if is_del:
+			info_str = 'Meal(id: %s) is delete.\nNotify all subscribers.' % meal['_id']
+		else:
+			info_str = 'Meal(id: %s) is done.\nNotify all subscribers.' % meal['_id']
+		self.sendSuccess(info_str)
 
 		cursor = self._db['Order'].find({'meal_id': meal['_id']})
 		for order in cursor:
-			noti_str = 'The meal(ID: %s) has arrived.\nYour order is:\n%s\nMessage: %s' % (
-				meal['_id'], order['order_string'], ann)
+			if is_del:
+				noti_str = 'Your order is cancel by the publisher.(Meal ID: %d)' % meal['_id']
+			else:
+				noti_str = 'The meal(ID: %s) has arrived.\nYour order is:\n%s\nMessage: %s' % (
+					meal['_id'], order['order_string'], ann)
 			fbSendShippingUpdate(order['uid'], noti_str)
 
-	# TODO : meal_del
+	def meal_del(self, arg):
+		self.meal_done(arg, is_del=True)
 
 
 	# ------------------------------------------------------
@@ -374,10 +390,18 @@ class MealCmd():
 		meal_oid = self.getObjectId(arg[idx])
 		if not meal_oid:
 			self.sendWrongFormat('Meal id incorrect.')
-			return
+			return None
 		meal = self._db['Meal'].find_one({'_id': meal_oid})
-		if not meal:
+		if not meal or meal['isDone']:
 			self.sendError('Meal do not exist.')
+			return None
+		now_time = datetime.now()
+		if now_time < meal['start_time']:
+			self.sendError('You can order meal after %s' % meal['start_time'].strftime('%Y-%m-%d-%H:%M'))
+			return None
+		if now_time > meal['stop_time']:
+			self.sendError('The meal has expired at %s.' % meal['stop_time'].strftime('%Y-%m-%d-%H:%M'))
+			return None
 		self.pushCmd(arg[idx])
 		return meal
 
@@ -404,10 +428,12 @@ class MealCmd():
 		meal = self.getMealByOid(arg, 0)
 		if not meal:
 			return
-		# TODO: check time
 		menu = self._db['Menu'].find_one({'_id': meal['menu_id']})
 
 		arr = arg[1:]
+		# Show Order Infomation
+		if not arr:
+			self.sendMessage('Order\nMenu: %s\nMeal Time: %s' % (menu['name'], meal['meal_time'].strftime('%Y-%m-%d-%H:%M')))
 		info_list, arr = self.getSplitList(arr)
 		for info in info_list:
 			self.pushCmd(info)
@@ -491,5 +517,5 @@ class MealCmd():
 		info_str = 'Information:\n'
 		for i in range(len(meal['infos'])):
 			info_str += '  %s: %s\n' % (meal['infos'][i], info_list[i])
-		self.sendSuccess('Orders received!\n%s\nOrder:\n  %s\nMessage:\n  %s' % (
-				info_str, order_string, message))
+		self.sendSuccess('Orders received!\n%s\nMeal ID:%s\nOrder:\n  %s\nMessage:\n  %s' % (
+				info_str, meal['_id'], order_string, message))
