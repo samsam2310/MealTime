@@ -1,0 +1,75 @@
+"Failed: ",""
+"Wrong format: ",""
+"Enter wrong format too many times.",""
+"Please enter it again:",""
+"Blank input.",""
+"There is no %(title)s.":""
+"menu",""
+"Please enter the index of %(title)s:",""
+"the menu",""
+"Index not integer.",""
+"Index is out of range.",""
+"Please enter %(title)s:"
+"a name",""
+"The name has been used.",""
+"Menu "%(name)s" successfully created.",""
+"Menu item:",""
+"No option.",""
+"Additional options:",""
+"No additional option.",""
+"Menu raw data:",""
+"There are some meal still using this menu, complete them before delete this menu.",""
+"Menu "%(name)s" deleted.",""
+"the menu data",""
+"Menu data is not correct.",""
+"Menu "%(name)s" successfully updated.",""
+"Input does not match the format.",""
+"meal",""
+"the meal",""
+"the start time",""
+"the stop time",""
+"the meal time",""
+"Enter informations' title, split by blank. If there is no informations' title, enter single ""$"".",""
+"Meal created.",""
+"Meal(ID: %(meal_id)s):
+Menu Name: %(menu_name)s
+Start at: %(start_time)s
+Stop at: %(stop_time)s
+Meal time: %(meal_time)s
+Informations list: %(info_list)s",""
+"People can order the meal by this link:",""
+"Enter any other comments(Enter single ""$"" if no comments.):",""
+"None",""
+"deleted",""
+"done",""
+"Meal(id: %(meal_id)s) is %(action)s.
+Notify all subscribers.",""
+"Your order is cancel by the publisher.(Meal ID: %(meal_id)s)",""
+"The meal(ID: %(meal_id)s) has arrived.
+Your order is:
+%(order_string)s
+Message: %(message)s",""
+"the meal id",""
+"Meal id incorrect.",""
+"Meal do not exist.",""
+"You can order meal after %(time)s",""
+"The meal has expired at %(time)s.",""
+"the selected item",""
+"Order
+Menu: %(menu_name)s
+Meal Time: %(meal_time)s",""
+"Command format error.",""
+"Please enter your ""%(title)s"":",""
+"Please enter the indexs of %(title)s(Split them by blank character(s). Enter single ""$"" if no options.):",""
+"all the options",""
+"all the additional options",""
+"Price: ",""
+"Information: ",""
+"Orders received!
+%(info_str)s
+Meal ID:%(meal_id)s
+Order:
+  %(order_str)s
+Message:
+  %(message)s",""
+

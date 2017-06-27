@@ -9,8 +9,20 @@ from __future__ import absolute_import, print_function, unicode_literals
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
+from tornado import locale
 
 from .fb_api import fbSendMessage, fbSendHaveRead, fbSendShippingUpdate, fbGetMMeLink
+
+locale.load_translations( os.path.join(os.path.dirname(__file__), 'locale') )
+
+
+class _Translate():
+	def __init__(self, loc_str, timezone):
+		self.self._lo = locale.get(loc_str)
+		self._tz = timezone
+
+	def __call__(self, trans_str):
+		return self.self._lo.translate(trans_str)
 
 
 class MealCmd():	
@@ -23,6 +35,7 @@ class MealCmd():
 		self._save_cmd = []
 		self._error_cnt = self._user['error_cnt']
 		self._clear_tag = False
+		self._lo = _Translate('en_US', 0)
 
 	@staticmethod
 	def getObjectId(key):
@@ -38,16 +51,16 @@ class MealCmd():
 	# When error_count up to 3 clear the saved cmd.
 	def sendError(self, message):
 		self.clearCmd()
-		fbSendMessage(self._uid, 'Failed: ' + message)
+		fbSendMessage(self._uid, self._lo('Failed: ') + message)
 
 	def sendWrongFormat(self, message):
-		error_message = 'Wrong format: %s\n' % message
+		error_message = self._lo('Wrong format: ') + message + '\n'
 		self._error_cnt += 1
 		if self._error_cnt >= 3:
-			error_message += 'Faild: Enter wrong format too many times.'
+			error_message += self._lo('Failed: ') + self._lo('Enter wrong format too many times.')
 			self.clearCmd()
 		else:
-			error_message += 'Please enter it again:'
+			error_message += self._lo('Please enter it again:')
 		fbSendMessage(self._uid, error_message)
 
 	def sendHaveRead(self):
@@ -65,7 +78,7 @@ class MealCmd():
 		arg = self._user['cmd'] + new_cmd if not is_start_new else new_cmd
 		subcmd = arg[0] if arg else ''
 		if self._user['cmd'] and not new_cmd:
-			self.sendWrongFormat('Blank input.')
+			self.sendWrongFormat( self._lo('Blank input.') )
 		elif subcmd in self.CMD:
 			self.pushCmd(subcmd)
 			getattr(self, subcmd)(arg[1:])
@@ -99,16 +112,16 @@ class MealCmd():
 	def getMenu(self, arg, idx):
 		cursor = self._db['Menu'].find({ 'owner': self._uid }, sort=[('name', 1)])
 		if cursor.clone().count() == 0:
-			self.sendError('There is no menu.')
+			self.sendError( self._lo('There is no %(title)s.') % {'title': self._lo('menu')} )
 			return None
 		if len(arg) < idx+1:
-			menu_list_str = 'Enter the index of menu:\n'
+			menu_list_str = self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the menu')} + '\n'
 			for i, menu in enumerate(cursor):
 				menu_list_str += 'ID:%d %s\n' % (i, menu['name'])
 			self.sendMessage(menu_list_str)
 			return None
 		elif not arg[idx].isdigit():
-			self.sendWrongFormat('Index not integer.')
+			self.sendWrongFormat( self._lo('Index not integer.') )
 			return None
 
 		midx = int(arg[idx])
@@ -118,18 +131,18 @@ class MealCmd():
 					skip = midx,
 					sort = [('name', 1)] )
 		if not menu:
-			self.sendWrongFormat('Index is out of range.')
+			self.sendWrongFormat( self._lo('Index is out of range.') )
 		return menu
 
 	def menu_new(self, arg):
 		if len(arg) < 1:
-			self.sendMessage('Please enter a name:')
+			self.sendMessage( self._lo('Please enter %(title)s:') % {'title': self._lo('a name')} )
 			return
 		name = arg[0]
 		if self._db['Menu'].find_one({
 				'name': name,
 				'owner': self._uid }):
-			self.sendError('The name has been used.')
+			self.sendError( self._lo('The name has been used.') )
 			return
 		self._db['Menu'].insert_one({
 				'name': name,
@@ -138,26 +151,30 @@ class MealCmd():
 				'ops': [],
 				'addis': []
 			})
-		self.sendSuccess('Menu "%s" successfully created.' % name)
+		self.sendSuccess( self._lo('Menu "%(name)s" successfully created.') % {'name':name})
 
 	def menu_show(self, arg):
 		menu = self.getMenu(arg, 0)
 		if not menu:
 			return
 
-		menu_str = 'Menu item:\n'
+		menu_str = self._lo('Menu item:') + '\n'
 		for i,item in enumerate(menu['items']):
 			op_str = ''
 			for opidx in item['opidxs']:
 				op = menu['ops'][opidx]
 				op_str += ' %s $%d' % (op['name'], op['price'])
+			if not op_str:
+				op_str = self._lo('No option.')
 			menu_str += '%d. %s $%d (%s )\n' % (i, item['name'], item['price'], op_str)
-		menu_str += 'Additional options:\n'
+		menu_str += self._lo('Additional options:') + '\n'
 		for addi in menu['addis']:
 			menu_str += '%s $%d ;' % (addi['name'], addi['price'])
+		if not menu['addis']:
+			menu_str += self._lo('No additional option.')
 		self.sendMessage(menu_str)
 
-		menu_raw_str = 'Menu raw data:\n'
+		menu_raw_str = self._lo('Menu raw data:') + '\n'
 		for item in menu['items']:
 			op_raw_str = ';'.join(map(lambda x:str(x), item['opidxs']) )
 			menu_raw_str += '%s|%d|%s ' % (item['name'], item['price'], op_raw_str)
@@ -174,10 +191,10 @@ class MealCmd():
 		if not menu:
 			return
 		if self._db['Meal'].find({'isDone': False, 'menu_id': menu['_id']}).count() != 0:
-			self.sendError('There are some meal still using this menu, complete them before delete this menu.')
+			self.sendError( self._lo('There are some meal still using this menu, complete them before delete this menu.') )
 			return
 		self._db['Menu'].delete_one({'_id': menu['_id']})
-		self.sendSuccess('Menu "%s" deleted.' % menu['name'])
+		self.sendSuccess( self._lo('Menu "%(name)s" deleted.') % {'name': menu['name']})
 
 	@staticmethod
 	def getListIndex(l, item):
@@ -197,7 +214,7 @@ class MealCmd():
 
 		arr = arg[1:]
 		if not arr:
-			self.sendMessage('Enter the menu data:')
+			self.sendMessage( self._lo('Please enter %(title)s:') % {'title': self._lo('the menu data')} )
 			return
 		item_list, arr = self.getSplitList(arr)
 		op_list, arr = self.getSplitList(arr)
@@ -233,7 +250,7 @@ class MealCmd():
 					for item in items):
 				raise IndexError
 		except (IndexError, ValueError):
-			self.sendWrongFormat('Menu data is not correct.')
+			self.sendWrongFormat( self._lo('Menu data is not correct.') )
 			return
 
 		self._db['Menu'].update_one(
@@ -243,7 +260,7 @@ class MealCmd():
 				'ops': ops,
 				'addis': addis}
 			} )
-		self.sendSuccess('Menu "%s" successfully updated.' % menu['name'])
+		self.sendSuccess( self._lo('Menu "%(name)s" successfully updated.') % {'name':menu['name']})
 
 	# ------------------------------------------------------
 	# Meal
@@ -261,12 +278,12 @@ class MealCmd():
 	def getTime(self, arg, idx, title):
 		time_format = '%Y-%m-%d-%H:%M'
 		if len(arg) < idx+1:
-			self.sendMessage('Enter the %s (ex: 2017-08-12-12:00):' % title)
+			self.sendMessage( self._lo('Please enter %(title)s:') % {'title': title} + ' (ex: 2017-08-12-12:00)')
 			return None
 		try:
 			time_obj = datetime.strptime(arg[idx], time_format)
 		except ValueError:
-			self.sendWrongFormat('Input does not match the format.')
+			self.sendWrongFormat( self._lo('Input does not match the format.') )
 			return
 		self.pushCmd(arg[idx])
 		return time_obj
@@ -274,16 +291,16 @@ class MealCmd():
 	def getMeal(self, arg, idx):
 		cursor = self._db['Meal'].find({ 'owner': self._uid, 'isDone': False }, sort=[('_id', 1)])
 		if cursor.clone().count() == 0:
-			self.sendError('There is no meal.')
+			self.sendError( self._lo('There is no %(title)s.') % {'title': self._lo('meal')} )
 			return None
 		if len(arg) < idx+1:
-			meal_list_str = 'Enter the index of the meal:\n'
+			meal_list_str = self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the meal') } + '\n'
 			for i, meal in enumerate(cursor):
-				meal_list_str += 'IDX:%d MEAL_ID:%s\n' % (i, meal['_id'])
+				meal_list_str += 'ID:%d MEAL_ID:%s\n' % (i, meal['_id'])
 			self.sendMessage(meal_list_str)
 			return None
 		elif not arg[idx].isdigit():
-			self.sendWrongFormat('Index not integer.')
+			self.sendWrongFormat( self._lo('Index not integer.') )
 			return None
 
 		midx = int(arg[idx])
@@ -293,7 +310,7 @@ class MealCmd():
 					skip = midx,
 					sort = [('_id', 1)] )
 		if not meal:
-			self.sendWrongFormat('Index is out of range.')
+			self.sendWrongFormat( self._lo('Index is out of range.') )
 		return meal
 
 	def meal_new(self, arg):
@@ -301,21 +318,21 @@ class MealCmd():
 		if not menu:
 			return
 
-		start_time = self.getTime(arg, 1, 'start time')
+		start_time = self.getTime(arg, 1, self._lo('the start time') )
 		if not start_time:
 			return
 
-		stop_time = self.getTime(arg, 2, 'stop time')
+		stop_time = self.getTime(arg, 2, self._lo('the stop time') )
 		if not stop_time:
 			return
 
-		meal_time = self.getTime(arg, 3, 'meal time')
+		meal_time = self.getTime(arg, 3, self._lo('the meal time') )
 		if not meal_time:
 			return
 
 		arr = arg[4:]
 		if not arr:
-			self.sendMessage('Enter informations\' title, split by blank. If there is no informations\' title, enter single "$".')
+			self.sendMessage( self._lo('Enter informations\' title, split by blank. If there is no informations\' title, enter single "$".') )
 			return
 		info_titles, arr = self.getSplitList(arr)
 
@@ -328,9 +345,15 @@ class MealCmd():
 				'meal_time': meal_time,
 				'isDone': False
 			})
-		self.sendMessage('Meal created. id: %s\nStart at: %s\nStop at: %s\nMeal time: %s\nInformations list: %s\nPeople can order the meal by this link:' % (
-			res.inserted_id, arg[1], arg[2], arg[3], ' '.join(info_titles) ))
-		self.sendSuccess(fbGetMMeLink('order %s' % res.inserted_id))
+		self.sendMessage(
+			self._lo('Meal created.') + '\n' + self._lo('Meal(ID: %(meal_id)s):\nMenu Name: %(menu_name)s\nStart at: %(start_time)s\nStop at: %(stop_time)s\nMeal time: %(meal_time)s\nInformations list: %(info_list)s') % {
+			'meal_id': res.inserted_id,
+			'menu_name': menu['name'],
+			'start_time': arg[1],
+			'stop_time': arg[2],
+			'meal_time': arg[3],
+			'info_list': ' '.join(info_titles) })
+		self.sendSuccess( self._lo('People can order the meal by this link:') + '\n' + fbGetMMeLink('order %s' % res.inserted_id) )
 
 
 	def meal_show(self, arg):
@@ -340,12 +363,13 @@ class MealCmd():
 
 		menu = self._db.find_one({'_id': meal['menu_id']})
 
-		meal_str = 'Meal(ID: %s):\n' % meal['_id']
-		meal_str += 'Menu Name: %s\n' % menu['name']
-		meal_str += 'Start at: %s\n' % meal['start_time'].strftime('%Y-%m-%d-%H:%M')
-		meal_str += 'Stop at: %s\n' % meal['stop_time'].strftime('%Y-%m-%d-%H:%M')
-		meal_str += 'Meal time: %s\n' % meal['meal_time'].strftime('%Y-%m-%d-%H:%M')
-		meal_str += 'Informations list: %s' % ' '.join(meal['infos'])
+		meal_str = self._lo('Meal(ID: %(meal_id)s):\nMenu Name: %(menu_name)s\nStart at: %(start_time)s\nStop at: %(stop_time)s\nMeal time: %(meal_time)s\nInformations list: %(info_list)s') % {
+			'meal_id': meal['_id'],
+			'menu_name': menu['name'],
+			'start_time': meal['start_time'].strftime('%Y-%m-%d-%H:%M'),
+			'stop_time': meal['stop_time'].strftime('%Y-%m-%d-%H:%M'),
+			'meal_time': meal['meal_time'].strftime('%Y-%m-%d-%H:%M'),
+			'info_list': ' '.join(meal['infos']) }
 		self.sendSuccess(meal_str)
 
 	def meal_done(self, arg, is_del=False):
@@ -355,25 +379,27 @@ class MealCmd():
 
 		arr = arg[1:]
 		if not arr:
-			self.sendMessage('Enter any other comments(Enter single "$" if no comments.):')
+			self.sendMessage( self._lo('Enter any other comments(Enter single "$" if no comments.):') )
 			return
 		message_list, arr = self.getSplitList(arr)
-		ann = ' '.join(message_list) if message_list else 'None.'
+		ann = ' '.join(message_list) if message_list else self._lo('None')
 
 		self._db['Meal'].update_one({'_id': meal['_id']}, {'$set': {'isDone': True}})
-		if is_del:
-			info_str = 'Meal(id: %s) is delete.\nNotify all subscribers.' % meal['_id']
-		else:
-			info_str = 'Meal(id: %s) is done.\nNotify all subscribers.' % meal['_id']
+		action = self._lo('deleted') if is_del else self._lo('done')
+		info_str = self._lo('Meal(id: %(meal_id)s) is %(action)s.\nNotify all subscribers.') % {
+				'meal_id': meal['_id'],
+				'action': action }
 		self.sendSuccess(info_str)
 
 		cursor = self._db['Order'].find({'meal_id': meal['_id']})
 		for order in cursor:
 			if is_del:
-				noti_str = 'Your order is cancel by the publisher.(Meal ID: %d)' % meal['_id']
+				noti_str = self._lo('Your order is cancel by the publisher.(Meal ID: %(meal_id)s)') % {'meal_id': meal['_id'] }
 			else:
-				noti_str = 'The meal(ID: %s) has arrived.\nYour order is:\n%s\nMessage: %s' % (
-					meal['_id'], order['order_string'], ann)
+				noti_str = self._lo('The meal(ID: %(meal_id)s) has arrived.\nYour order is:\n%(order_string)s\nMessage: %(message)s') % {
+					'meal_id': meal['_id'],
+					'order_string': order['order_string'],
+					'message': ann }
 			fbSendShippingUpdate(order['uid'], noti_str)
 
 	def meal_del(self, arg):
@@ -385,42 +411,42 @@ class MealCmd():
 	# ------------------------------------------------------
 	def getMealByOid(self, arg, idx):
 		if len(arg) < idx + 1:
-			self.sendMessage('Enter the meal id:')
+			self.sendMessage( self._lo('Please enter %(title)s:') % {'title': self._lo('the meal id')} )
 			return None
 		meal_oid = self.getObjectId(arg[idx])
 		if not meal_oid:
-			self.sendWrongFormat('Meal id incorrect.')
+			self.sendWrongFormat( self._lo('Meal id incorrect.') )
 			return None
 		meal = self._db['Meal'].find_one({'_id': meal_oid})
 		if not meal or meal['isDone']:
-			self.sendError('Meal do not exist.')
+			self.sendError( self._lo('Meal do not exist.') )
 			return None
 		now_time = datetime.now()
 		if now_time < meal['start_time']:
-			self.sendError('You can order meal after %s' % meal['start_time'].strftime('%Y-%m-%d-%H:%M'))
+			self.sendError( self._lo('You can order meal after %(time)s') % {'time': meal['start_time'].strftime('%Y-%m-%d-%H:%M')})
 			return None
 		if now_time > meal['stop_time']:
-			self.sendError('The meal has expired at %s.' % meal['stop_time'].strftime('%Y-%m-%d-%H:%M'))
+			self.sendError( self._lo('The meal has expired at %(time)s.') % {'time': meal['stop_time'].strftime('%Y-%m-%d-%H:%M')})
 			return None
 		self.pushCmd(arg[idx])
 		return meal
 
 	def getItem(self, menu, arg, idx):
 		if len(arg) < idx + 1:
-			item_str = 'Enter the index of the selected item:\n'
+			item_str = self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the selected item')} + '\n'
 			for i, item in enumerate(menu['items']):
 				item_str += 'ID:%d %s $%d\n' % (i, item['name'], item['price'])
 			self.sendMessage(item_str)
 			return None
 		elif not arg[idx].isdigit():
-			self.sendWrongFormat('Index not integer.')
+			self.sendWrongFormat( self._lo('Index not integer.') )
 			return None
 
 		item_idx = int(arg[idx])
 		if item_idx in range(len(menu['items'])):
 			self.pushCmd(arg[idx])
 			return menu['items'][item_idx]
-		self.sendWrongFormat('Index out of range.')
+		self.sendWrongFormat( self._lo('Index out of range.') )
 		return None
 
 	# Order has no subcmd
@@ -433,15 +459,17 @@ class MealCmd():
 		arr = arg[1:]
 		# Show Order Infomation
 		if not arr:
-			self.sendMessage('Order\nMenu: %s\nMeal Time: %s' % (menu['name'], meal['meal_time'].strftime('%Y-%m-%d-%H:%M')))
+			self.sendMessage( self._lo('Order\nMenu: %(menu_name)s\nMeal Time: %(meal_time)s') % {
+				'menu_name': menu['name'],
+				'meal_time': meal['meal_time'].strftime('%Y-%m-%d-%H:%M') })
 		info_list, arr = self.getSplitList(arr)
 		for info in info_list:
 			self.pushCmd(info)
 		if len(info_list) != len(meal['infos']):
 			if len(info_list) > len(meal['infos']):
-				self.sendError('Command format error.')
+				self.sendError( self._lo('Command format error.') )
 			else:
-				self.sendMessage('Please enter your "%s":' % meal['infos'][len(info_list)])
+				self.sendMessage( self._lo('Please enter your "%(title)s":') % {'title': meal['infos'][len(info_list)] } )
 			return
 		self.pushCmd('$')
 
@@ -454,7 +482,7 @@ class MealCmd():
 		arr = arr[1:]
 		# No op_list
 		if not arr:
-			info_str = 'Enter the indexs of the options(Split them by blank character(s). Enter single "$" if no options.):\n'
+			info_str = self._lo('Please enter the indexs of %(title)s(Split them by blank character(s). Enter single "$" if no options.):') % {'title': self._lo('all the options')} + '\n'
 			for i,opidx in enumerate(item['opidxs']):
 				op = menu['ops'][opidx]
 				info_str += 'ID:%d %s $%d\n' % (i, op['name'], op['price'])
@@ -467,8 +495,11 @@ class MealCmd():
 				order_string += op['name'] + ' '
 				order_price += op['price']
 			order_string += ') '
-		except (IndexError, ValueError):
-			self.sendWrongFormat('Indexs of options have wrong format.')
+		except IndexError:
+			self.sendWrongFormat( self._lo('Index out of range.') )
+			return
+		except ValueError:
+			self.sendWrongFormat( self._lo('Index not integer.') )
 			return
 		for op in op_list:
 			self.pushCmd(op)
@@ -476,7 +507,7 @@ class MealCmd():
 
 		# No addi_list
 		if not arr:
-			info_str = 'Enter the indexs of the additional options(Split them by blank character(s). Enter single "$" if no options.):\n'
+			info_str = self._lo('Please enter the indexs of %(title)s(Split them by blank character(s). Enter single "$" if no options.):') % {'title': self._lo('all the additional options')} + '\n'
 			for i,addi in enumerate(menu['addis']):
 				info_str += 'ID:%d %s $%d\n' % (i, addi['name'], addi['price'])
 			self.sendMessage(info_str)
@@ -487,8 +518,11 @@ class MealCmd():
 				addi = menu['addis'][int(x)]
 				order_string += addi['name'] + ' '
 				order_price += addi['price']
-		except (IndexError, ValueError):
-			self.sendWrongFormat('Indexs of additional options have wrong format.')
+		except IndexError:
+			self.sendWrongFormat( self._lo('Index out of range.') )
+			return
+		except ValueError:
+			self.sendWrongFormat( self._lo('Index not integer.') )
 			return
 		for addi in addi_list:
 			self.pushCmd(addi)
@@ -496,13 +530,13 @@ class MealCmd():
 
 		# No message_list
 		if not arr:
-			info_str = 'Enter any other comments(Enter single "$" if no comments.):'
+			info_str = self._lo('Enter any other comments(Enter single "$" if no comments.):')
 			self.sendMessage(info_str)
 			return
 		message_list, arr = self.getSplitList(arr)
 
-		order_string += 'price: ' + str(order_price)
-		message = ' '.join(message_list)
+		order_string += self._lo('Price: ') + str(order_price)
+		message = ' '.join(message_list) if message_list else self._lo('None')
 
 		self._db['Order'].update_one({
 				'uid': self._uid,
@@ -514,8 +548,15 @@ class MealCmd():
 				'order_string': order_string,
 				'message': message
 			}}, upsert=True)
-		info_str = 'Information:\n'
+
+		info_str = self._lo('Information: ') + '\n'
 		for i in range(len(meal['infos'])):
 			info_str += '  %s: %s\n' % (meal['infos'][i], info_list[i])
-		self.sendSuccess('Orders received!\n%s\nMeal ID:%s\nOrder:\n  %s\nMessage:\n  %s' % (
-				info_str, meal['_id'], order_string, message))
+		if not meal['infos']:
+			info_str += self._lo('None') + '\n'
+
+		self.sendSuccess( self._lo('Orders received!\n%(info_str)s\nMeal ID:%(meal_id)s\nOrder:\n  %(order_str)s\nMessage:\n  %(message)s') % {
+				'info_str': info_str,
+				'meal_id': meal['_id'],
+				'order_str': order_string,
+				'message': message} )
