@@ -26,10 +26,6 @@ FB_APP_SECRET = os.environ.get('FB_APP_SECRET', '')
 
 
 class FBWebHookHandler(BaseApiHandler):
-	def prepare(self):
-		super(self.__class__, self).prepare()
-		self._db = get_db()
-
 	def get(self):
 		token = self.get_argument('hub.verify_token', default='')
 		if token and token == FB_WEBHOOK_TOKEN:

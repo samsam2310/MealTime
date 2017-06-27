@@ -18,6 +18,7 @@
 * new menu_idx start_time stop_time meal_time info_titles... $
 	* time_format: 2017-09-10-13:15
 * show meal_idx
+* stop meal_idx
 * done meal_idx message message ... $
 * del meal_idx message message ... $
 

@@ -17,6 +17,8 @@ import requests
 FB_TOKEN = os.environ.get('FB_TOKEN', '')
 FB_PAGE_NAME = os.environ.get('FB_PAGE_NAME', '')
 
+FB_API_BASE = 'https://graph.facebook.com/v2.9'
+
 
 def fbRequestPost(url, data):
 	json_data = json.dumps(data)
@@ -26,7 +28,7 @@ def fbRequestPost(url, data):
 			data=json_data)
 
 
-FB_SEND_API_URL = 'https://graph.facebook.com/v2.6/me/messages?access_token=%s' % FB_TOKEN
+FB_SEND_API_URL = FB_API_BASE + '/me/messages?access_token=%s' % FB_TOKEN
 def fbSendMessage(uid, message):
 	data = {
 		'recipient': {
@@ -66,3 +68,10 @@ def fbGetMMeLink(ref = ''):
 		enc_data = base64.urlsafe_b64encode(ref.encode()).decode()
 		url += '?ref=%s' % enc_data
 	return url
+
+
+FB_API_USER_DATA_URL = FB_API_BASE + '/%s?access_token=%s'
+def fbGetUserData(uid):
+	url = FB_API_USER_DATA_URL % (uid, FB_TOKEN)
+	req = requests.get(url)
+	return req.json()

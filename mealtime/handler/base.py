@@ -25,6 +25,7 @@ class BaseApiHandler(tornado.web.RequestHandler):
 	def prepare(self):
 		"""This method is executed at the beginning of each request.
 		"""
+		self._db = get_db()
 
 	def on_finish(self):
 		"""Finish this response, ending the HTTP request 

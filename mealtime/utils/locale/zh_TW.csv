@@ -1,75 +1,96 @@
-"Failed: ",""
-"Wrong format: ",""
-"Enter wrong format too many times.",""
-"Please enter it again:",""
-"Blank input.",""
-"There is no %(title)s.":""
-"menu",""
-"Please enter the index of %(title)s:",""
-"the menu",""
-"Index not integer.",""
-"Index is out of range.",""
-"Please enter %(title)s:"
-"a name",""
-"The name has been used.",""
-"Menu "%(name)s" successfully created.",""
-"Menu item:",""
-"No option.",""
-"Additional options:",""
-"No additional option.",""
-"Menu raw data:",""
-"There are some meal still using this menu, complete them before delete this menu.",""
-"Menu "%(name)s" deleted.",""
-"the menu data",""
-"Menu data is not correct.",""
-"Menu "%(name)s" successfully updated.",""
-"Input does not match the format.",""
-"meal",""
-"the meal",""
-"the start time",""
-"the stop time",""
-"the meal time",""
-"Enter informations' title, split by blank. If there is no informations' title, enter single ""$"".",""
-"Meal created.",""
+"Failed:","失敗:"
+"Wrong format:","格式錯誤:"
+"Enter wrong format too many times.","輸入太多次錯誤的格式。"
+"Please enter it again:","請再輸入一次:"
+"Blank input.","空白的輸入。"
+"There is no %(title)s.":"沒有任何的%(title)s。"
+"menu","菜單"
+"Please enter the index of %(title)s:","請輸入%(title)s的編號:"
+"the menu","菜單"
+"Index not integer.","編號不是整數。"
+"Index out of range.","編號超出範圍。"
+"Please enter %(title)s:","請輸入%(title)s:"
+"a name","一個名字"
+"The name has been used.","這個名字已經被使用了。"
+"Menu ""%(name)s"" successfully created.","成功創建菜單「%(name)s」。"
+"Menu item:","菜單項目:"
+"No option.","沒有選項。"
+"Additional options:","額外的選項:"
+"No additional option.","沒有額外的選項。"
+"Menu raw data:","菜單的原始資料:"
+"There are some meals still using this menu, complete them before delete this menu.","尚有一些訂餐使用這張菜單，刪除前先完成他們。"
+"Menu "%(name)s" deleted.","成功刪除菜單「%(name)s」。"
+"the menu data","菜單資料"
+"Menu data is not correct.","不正確的菜單資料。"
+"Menu "%(name)s" successfully updated.","成功更新菜單「%(name)s」。"
+"Input does not match the format.","輸入和格式不匹配。"
+"meal","訂餐"
+"the meal","訂餐"
+"the start time","開始時間"
+"the stop time","結束時間"
+"the meal time","用餐時間"
+"Enter informations' title, split by blank. If there is no informations' title, enter single ""$"".","輸入個人資料標題，用空白分隔。如果沒有任何的個人資料，輸入一個「$」。"
+"Meal created.","成功創建訂餐。"
 "Meal(ID: %(meal_id)s):
 Menu Name: %(menu_name)s
 Start at: %(start_time)s
 Stop at: %(stop_time)s
 Meal time: %(meal_time)s
-Informations list: %(info_list)s",""
-"People can order the meal by this link:",""
-"Enter any other comments(Enter single ""$"" if no comments.):",""
-"None",""
-"deleted",""
-"done",""
-"Meal(id: %(meal_id)s) is %(action)s.
-Notify all subscribers.",""
-"Your order is cancel by the publisher.(Meal ID: %(meal_id)s)",""
+Informations list: %(info_list)s","訂餐(ID: %(meal_id)s):
+菜單名稱: %(menu_name)s
+開始於: %(start_time)s
+結束於: %(stop_time)s
+用餐時間: %(meal_time)s
+個人資料清單: %(info_list)s"
+"People can order the meal by this link:","使用者可以用這個連結點餐:"
+"Enter any other comments(Enter single ""$"" if no comments.):","輸入任何其他的訊息(如果沒有，輸入一個「$」):"
+"None","無"
+"deleted","已刪除"
+"done","已完成"
+"Meal(ID: %(meal_id)s) is %(action)s.
+Notify all subscribers.","訂餐(ID: %(meal_id)s)%(action)s。
+通知所有訂餐者。"
+"Your order is cancel by the publisher.(Meal ID: %(meal_id)s)","你的訂餐(ID: %(meal_id)s)已經被發布者取消。"
 "The meal(ID: %(meal_id)s) has arrived.
 Your order is:
 %(order_string)s
-Message: %(message)s",""
-"the meal id",""
-"Meal id incorrect.",""
-"Meal do not exist.",""
-"You can order meal after %(time)s",""
-"The meal has expired at %(time)s.",""
-"the selected item",""
+Message: %(message)s","你的訂餐(ID: %(meal_id)s)已經到達。
+你的餐點是:
+%(order_string)s
+訊息: %(message)s"
+"the meal id","訂餐ID"
+"Meal id incorrect.","訂餐ID不正確。"
+"Meal do not exist.","這個訂餐不存在。"
+"You can order meal after %(time)s","你可以在 %(time)s 之後進行訂餐。"
+"The meal has expired at %(time)s.","這個訂餐已經在%(time)s失效。"
+"the selected item","選擇的項目"
 "Order
+Meal ID: %(meal_id)s
 Menu: %(menu_name)s
-Meal Time: %(meal_time)s",""
-"Command format error.",""
-"Please enter your ""%(title)s"":",""
-"Please enter the indexs of %(title)s(Split them by blank character(s). Enter single ""$"" if no options.):",""
-"all the options",""
-"all the additional options",""
-"Price: ",""
-"Information: ",""
+Meal Time: %(meal_time)s","點餐
+訂餐ID: %(meal_id)s
+菜單: %(menu_name)s
+用餐時間: %(meal_time)s"
+"Command format error.","指令格式錯誤。"
+"Please enter your ""%(title)s"":","請輸入你的「%(title)s」:"
+"Please enter the indexs of %(title)s(Split them by blank character(s). Enter single ""$"" if no options.):","請輸入%(title)s的編號(用空白隔開。如果沒有輸入一個「$」)"
+"all the selected options","所有選擇的選項"
+"all the selected additional options","所有選擇的額外選項"
+"Price:","金額:"
+"Information:","個人資料:"
 "Orders received!
 %(info_str)s
 Meal ID:%(meal_id)s
 Order:
   %(order_str)s
 Message:
-  %(message)s",""
-
+  %(message)s","收到訂單!
+%(info_str)s
+訂餐ID: %(meal_id)s
+訂單:
+  %(order_str)s
+訊息:
+  %(message)s"
+"Meal(ID: %(meal_id)s) stop accepting subscriptions.","訂餐(ID: %(meal_id)s)已經停止接受新的訂單。"
+"There are %(num)d subscriber(s).","共有 %(num)d 個訂餐者。"
+"You can view the details in this page:","你可以在這個頁面查看細節。"

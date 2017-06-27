@@ -1,0 +1,8 @@
+<head>
+	<title>Meal</title>
+</head>
+<body>
+	{% for order in orders %}
+		<p>uid: {{ order['uid'] }} order: {{ order['order_string'] }} message: {{ order['message'] }}</p>
+	{% end %}
+</body>

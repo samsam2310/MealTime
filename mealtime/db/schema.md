@@ -3,6 +3,7 @@
 * uid: fb uid
 * cmd[]: the current cmd and args.
 * error_count: int, the times of error input to the cmd.
+* udata{}: fb user data cache.
 
 # Menu
 
