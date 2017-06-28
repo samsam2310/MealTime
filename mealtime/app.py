@@ -39,7 +39,7 @@ if __name__ == '__main__':
 	server_info = ''
 	if UNIX_SOCKET:
 		server = HTTPServer(application)
-		socket = bind_unix_socket(UNIX_SOCKET)
+		socket = bind_unix_socket(UNIX_SOCKET, mode=0o666)
 		server.add_socket(socket)
 		server_info = 'Server(%s)' % UNIX_SOCKET
 	else:
