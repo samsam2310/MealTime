@@ -2,7 +2,14 @@
 	<title>Meal</title>
 </head>
 <body>
+	<h1>Menu: {{ menu['name'] }}</h1>
+	<h3>Order</h3>
 	{% for order in orders %}
 		<p>uid: {{ order['uid'] }} order: {{ order['order_string'] }} message: {{ order['message'] }}</p>
 	{% end %}
+	<h3>Summary</h3>
+	{% for item_str in item_strs %}
+		<p>{{ item_str }}</p>
+	{% end %}
+	<p>Total Price: ${{ total_price }}</p>
 </body>

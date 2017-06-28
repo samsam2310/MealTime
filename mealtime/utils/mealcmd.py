@@ -206,7 +206,7 @@ class MealCmd():
 		menu = self.getMenu(arg, 0)
 		if not menu:
 			return
-		if self._db['Meal'].find({'isDone': False, 'menu_id': menu['_id']}).count() != 0:
+		if self._db['Meal'].find({'is_done': False, 'menu_id': menu['_id']}).count() != 0:
 			self.sendError( self._lo('There are some meals still using this menu, complete them before delete this menu.') )
 			return
 		self._db['Menu'].delete_one({'_id': menu['_id']})
@@ -305,7 +305,7 @@ class MealCmd():
 		return time_obj
 
 	def getMeal(self, arg, idx):
-		cursor = self._db['Meal'].find({ 'owner': self._uid, 'isDone': False }, sort=[('_id', 1)])
+		cursor = self._db['Meal'].find({ 'owner': self._uid, 'is_done': False }, sort=[('_id', 1)])
 		if cursor.clone().count() == 0:
 			self.sendError( self._lo('There is no %(title)s.') % {'title': self._lo('meal')} )
 			return None
@@ -322,7 +322,7 @@ class MealCmd():
 		midx = int(arg[idx])
 		self.pushCmd(arg[idx])
 		meal = self._db['Meal'].find_one(
-					{ 'owner': self._uid, 'isDone': False },
+					{ 'owner': self._uid, 'is_done': False },
 					skip = midx,
 					sort = [('_id', 1)] )
 		if not meal:
@@ -359,7 +359,7 @@ class MealCmd():
 				'start_time': start_time,
 				'stop_time': stop_time,
 				'meal_time': meal_time,
-				'isDone': False
+				'is_done': False
 			})
 		self.sendMessage(
 			self._lo('Meal created.') + '\n' + self._lo('Meal(ID: %(meal_id)s):\nMenu Name: %(menu_name)s\nStart at: %(start_time)s\nStop at: %(stop_time)s\nMeal time: %(meal_time)s\nInformations list: %(info_list)s') % {
@@ -415,7 +415,7 @@ class MealCmd():
 		message_list, arr = self.getSplitList(arr)
 		ann = ' '.join(message_list) if message_list else self._lo('None')
 
-		self._db['Meal'].update_one({'_id': meal['_id']}, {'$set': {'isDone': True}})
+		self._db['Meal'].update_one({'_id': meal['_id']}, {'$set': {'is_done': True}})
 		action = self._lo('deleted') if is_del else self._lo('done')
 		info_str = self._lo('Meal(ID: %(meal_id)s) is %(action)s.\nNotify all subscribers.') % {
 				'meal_id': meal['_id'],
@@ -449,22 +449,25 @@ class MealCmd():
 			self.sendWrongFormat( self._lo('Meal id incorrect.') )
 			return None
 		meal = self._db['Meal'].find_one({'_id': meal_oid})
-		if not meal or meal['isDone']:
+		if not meal or meal['is_done']:
 			self.sendError( self._lo('Meal do not exist.') )
 			return None
-		now_time = datetime.now()
+		now_time = datetime.utcnow()
 		if now_time < meal['start_time']:
-			self.sendError( self._lo('You can order meal after %(time)s') % {'time': meal['start_time'].strftime('%Y-%m-%d-%H:%M')})
+			self.sendError( self._lo('You can order meal after %(time)s') % {
+				'time': self._lo.fromDatetime(meal['start_time'], '%Y-%m-%d-%H:%M') })
 			return None
 		if now_time > meal['stop_time']:
-			self.sendError( self._lo('The meal has expired at %(time)s.') % {'time': meal['stop_time'].strftime('%Y-%m-%d-%H:%M')})
+			self.sendError( self._lo('The meal has expired at %(time)s.') % {
+				'time': self._lo.fromDatetime(meal['stop_time'], '%Y-%m-%d-%H:%M') })
 			return None
 		self.pushCmd(arg[idx])
 		return meal
 
 	def getItem(self, menu, arg, idx):
 		if len(arg) < idx + 1:
-			item_str = self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the selected item')} + '\n'
+			item_str = self._lo('Please enter the index of %(title)s:') % {
+				'title': self._lo('the selected item')} + '\n'
 			for i, item in enumerate(menu['items']):
 				item_str += 'ID:%d %s $%d\n' % (i, item['name'], item['price'])
 			self.sendMessage(item_str)
@@ -493,7 +496,7 @@ class MealCmd():
 			self.sendMessage( self._lo('Order\nMeal ID: %(meal_id)s\nMenu: %(menu_name)s\nMeal Time: %(meal_time)s') % {
 				'meal_id': meal['_id'],
 				'menu_name': menu['name'],
-				'meal_time': meal['meal_time'].strftime('%Y-%m-%d-%H:%M') })
+				'meal_time': self._lo.fromDatetime(meal['meal_time'], '%Y-%m-%d-%H:%M') })
 		info_list, arr = self.getSplitList(arr)
 		for info in info_list:
 			self.pushCmd(info)
@@ -508,8 +511,8 @@ class MealCmd():
 		item = self.getItem(menu, arr, 0)
 		if not item:
 			return
-		order_string = item['name'] + ' ('
-		order_price = item['price']
+		item_str = item['name']
+		item_price = item['price']
 
 		arr = arr[1:]
 		# No op_list
@@ -522,12 +525,13 @@ class MealCmd():
 			self.sendMessage(info_str)
 			return
 		op_list, arr = self.getSplitList(arr)
+		op_strs = []
+		op_price = 0
 		try:
 			for x in op_list:
 				op = menu['ops'][item['opidxs'][int(x)]]
-				order_string += op['name'] + ' '
-				order_price += op['price']
-			order_string += ') '
+				op_strs.append(op['name'])
+				op_price += op['price']
 		except IndexError:
 			self.sendWrongFormat( self._lo('Index out of range.') )
 			return
@@ -547,11 +551,13 @@ class MealCmd():
 			self.sendMessage(info_str)
 			return
 		addi_list, arr = self.getSplitList(arr)
+		addi_strs = []
+		addi_price = 0
 		try:
 			for x in addi_list:
 				addi = menu['addis'][int(x)]
-				order_string += addi['name'] + ' '
-				order_price += addi['price']
+				addi_strs.append(addi['name'])
+				addi_price += addi['price']
 		except IndexError:
 			self.sendWrongFormat( self._lo('Index out of range.') )
 			return
@@ -569,7 +575,14 @@ class MealCmd():
 			return
 		message_list, arr = self.getSplitList(arr)
 
-		order_string += self._lo('Price:') + ' ' + str(order_price)
+		if op_strs:
+			item_str += '(%s)' % ' '.join(op_strs)
+			item_price += op_price
+		order_string = item_str
+		if addi_strs:
+			order_string += ' + ' + ','.join(addi_strs)
+		order_price = item_price + addi_price
+		order_string += ' ' + self._lo('Price:') + ' ' + str(order_price)
 		message = ' '.join(message_list) if message_list else self._lo('None')
 
 		self._db['Order'].update_one({
@@ -580,6 +593,9 @@ class MealCmd():
 				'meal_id': meal['_id'],
 				'infos': info_list,
 				'order_string': order_string,
+				'item_string': item_str,
+				'item_price': item_price,
+				'addi_idxs': [int(x) for x in addi_list], # assert addi_list can convert to int
 				'message': message
 			}}, upsert=True)
 

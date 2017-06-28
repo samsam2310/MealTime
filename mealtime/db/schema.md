@@ -23,7 +23,7 @@
 * start_time: time.
 * stop_time: time.
 * meal_time: time.
-* isDone(Boolean): is active or not.
+* is_done(Boolean): is active or not.
 
 # Order
 
@@ -31,4 +31,7 @@
 * meal_id: _id of the meal.
 * infos[]: Informations' title of the meal.
 * order_string: string.
+* item_string: string.
+* item_price: int.
+* addi_idxs[]: int list.
 * message: string.
