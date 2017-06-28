@@ -39,6 +39,7 @@ def fbSendMessage(uid, message):
 		}
 	}
 	fbRequestPost(FB_SEND_API_URL, data)
+	# TODO : check error message
 
 def fbSendHaveRead(uid):
 	data = {
