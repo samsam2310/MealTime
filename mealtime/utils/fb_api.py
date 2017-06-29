@@ -93,4 +93,7 @@ FB_API_USER_DATA_URL = FB_API_BASE + '/%s?access_token=%s'
 def fbGetUserData(uid):
 	url = FB_API_USER_DATA_URL % (uid, FB_TOKEN)
 	req = requests.get(url)
-	return req.json()
+	data = req.json()
+	if not req.get('locale', None) or not req.get('timezone', None):
+		logging.error('User data do not contain locale or timezone(ID: %s)' % uid)
+	return data

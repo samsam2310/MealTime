@@ -52,7 +52,7 @@ class MealCmd():
 		self._clear_tag = False
 		# Update udata
 		self._udata = fbGetUserData(uid)
-		self._lo = _Translate(self._udata['locale'], self._udata['timezone'])
+		self._lo = _Translate(self._udata.get('locale','en_US'), self._udata.get('timezone',0))
 
 	@staticmethod
 	def getObjectId(key):
