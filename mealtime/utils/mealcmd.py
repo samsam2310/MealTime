@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from tornado import locale
 
 import os
+import requests
+import logging
 
 from .fb_api import fbSendMessage, fbSplitMessageLine, fbSendHaveRead, fbSendShippingUpdate, fbGetMMeLink, fbGetUserData
 
@@ -86,6 +88,27 @@ class MealCmd():
 
 	def clearCmd(self):
 		self._clear_tag = True
+
+	def parseFile(self, attach):
+		MAX_FILE_LEN = 1048576 # 1MB
+		if attach['type'] == 'file':
+			url = attach['payload']['url']
+			req_h = requests.head(url)
+			file_size_str = req_h.headers.get('Content-Length', 'nan')
+			file_size = int(file_size_str) if file_size_str.isdigit() else MAX_FILE_LEN
+			if file_size >= MAX_FILE_LEN:
+				logging.error('Got a too large file from ID: %s.' % self._uid)
+				self.sendMessage( self._lo('I can only handle the file which size less than 1MB. QAQ') )
+				return
+			req = requests.get(url)
+			try:
+				text = req.content.decode()
+				self.parse(text)
+			except UnicodeDecodeError:
+				logging.error('Got a binary file from ID: %s' % self._uid)
+				self.sendHaveRead()
+
+		# else: maybe image or other file
 
 	CMD = ['meal', 'menu', 'order']
 	def parse(self, cmd_str, is_start_new=False):
@@ -626,7 +649,6 @@ class MealCmd():
 		if not meal['infos']:
 			info_str += self._lo('None') + '\n'
 
-		# TODO : add item string and item price and addis list
 		success_str = self._lo('Orders received!\n%(info_str)s\nMeal ID:%(meal_id)s\nOrder:\n  %(order_str)s\nMessage:\n  %(message)s') % {
 				'info_str': info_str,
 				'meal_id': meal['_id'],

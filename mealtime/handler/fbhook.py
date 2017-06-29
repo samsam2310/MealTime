@@ -17,6 +17,7 @@ import binascii
 from .base import BaseApiHandler
 from ..db import get_db
 from ..utils.mealcmd import MealCmd
+from ..utils.fb_api import fbSendMessage
 
 
 FB_WEBHOOK_TOKEN = os.environ.get('FB_WEBHOOK_TOKEN', '')
@@ -65,10 +66,13 @@ class FBWebHookHandler(BaseApiHandler):
 		uid = message['sender']['id']
 		cmd_obj = MealCmd(uid, self._db)
 		text = message['message'].get('text', None)
+		attachs = message['message'].get('attachments', [])
 		if text:
 			logging.info('Got: %s (From Id: %s)' % (text, uid))
 			cmd_obj.parse(text)
-		# else: Not a text message(maybe like img or something else).
+		for attach in attachs:
+			logging.info('Got attachments (From Id: %s)' % uid)
+			cmd_obj.parseFile(attach)
 
 	# Assert 'referral' is a referral webhook obj.
 	def handleReferral(self, referral):
