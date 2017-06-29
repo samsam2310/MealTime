@@ -13,7 +13,7 @@ from tornado import locale
 
 import os
 
-from .fb_api import fbSendMessage, fbSendHaveRead, fbSendShippingUpdate, fbGetMMeLink, fbGetUserData
+from .fb_api import fbSendMessage, fbSplitMessageLine, fbSendHaveRead, fbSendShippingUpdate, fbGetMMeLink, fbGetUserData
 
 locale.load_translations( os.path.join(os.path.dirname(__file__), 'locale') )
 
@@ -131,10 +131,12 @@ class MealCmd():
 			self.sendError( self._lo('There is no %(title)s.') % {'title': self._lo('menu')} )
 			return None
 		if len(arg) < idx+1:
-			menu_list_str = self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the menu')} + '\n'
+			menu_list_str = ''
 			for i, menu in enumerate(cursor):
 				menu_list_str += 'ID:%d %s\n' % (i, menu['name'])
-			self.sendMessage(menu_list_str)
+			menu_list_str += '\n' + self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the menu')}
+			for block in fbSplitMessageLine(menu_list_str):
+				self.sendMessage(block)
 			return None
 		elif not arg[idx].isdigit():
 			self.sendWrongFormat( self._lo('Index not integer.') )
@@ -188,7 +190,8 @@ class MealCmd():
 			menu_str += '%s $%d ;' % (addi['name'], addi['price'])
 		if not menu['addis']:
 			menu_str += self._lo('No additional option.')
-		self.sendMessage(menu_str)
+		for block in fbSplitMessageLine(menu_str):
+			self.sendMessage(block)
 
 		menu_raw_str = self._lo('Menu raw data:') + '\n'
 		for item in menu['items']:
@@ -200,15 +203,20 @@ class MealCmd():
 		menu_raw_str += '$ '
 		for addi in menu['addis']:
 			menu_raw_str += '%s|%d ' % (addi['name'], op['price'])
-		self.sendSuccess(menu_raw_str)
+		for block in fbSplitMessageLine(menu_raw_str, ' '):
+			self.sendSuccess(block)
+
+	def checkMenuCanChange(self, menu):
+		if self._db['Meal'].find({'is_done': False, 'menu_id': menu['_id']}).count() != 0:
+			self.sendError( self._lo('There are some meals still using this menu, complete them before delete this menu.') )
+			return False
+		return True
 
 	def menu_del(self, arg):
 		menu = self.getMenu(arg, 0)
-		if not menu:
+		if not menu or not self.checkMenuCanChange(menu):
 			return
-		if self._db['Meal'].find({'is_done': False, 'menu_id': menu['_id']}).count() != 0:
-			self.sendError( self._lo('There are some meals still using this menu, complete them before delete this menu.') )
-			return
+
 		self._db['Menu'].delete_one({'_id': menu['_id']})
 		self.sendSuccess( self._lo('Menu "%(name)s" deleted.') % {'name': menu['name']})
 
@@ -225,7 +233,7 @@ class MealCmd():
 
 	def menu_edit(self, arg):
 		menu = self.getMenu(arg, 0)
-		if not menu:
+		if not menu or not self.checkMenuCanChange(menu):
 			return
 
 		arr = arg[1:]
@@ -310,10 +318,12 @@ class MealCmd():
 			self.sendError( self._lo('There is no %(title)s.') % {'title': self._lo('meal')} )
 			return None
 		if len(arg) < idx+1:
-			meal_list_str = self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the meal') } + '\n'
+			meal_list_str = ''
 			for i, meal in enumerate(cursor):
 				meal_list_str += 'ID:%d MEAL_ID:%s\n' % (i, meal['_id'])
-			self.sendMessage(meal_list_str)
+			meal_list_str += '\n' + self._lo('Please enter the index of %(title)s:') % {'title': self._lo('the meal') }
+			for block in fbSplitMessageLine(meal_list_str):
+				self.sendMessage(block)
 			return None
 		elif not arg[idx].isdigit():
 			self.sendWrongFormat( self._lo('Index not integer.') )
@@ -431,7 +441,8 @@ class MealCmd():
 					'meal_id': meal['_id'],
 					'order_string': order['order_string'],
 					'message': ann }
-			fbSendShippingUpdate(order['uid'], noti_str)
+			for block in fbSplitMessageLine(noti_str):
+				fbSendShippingUpdate(order['uid'], block)
 
 	def meal_del(self, arg):
 		self.meal_done(arg, is_del=True)
@@ -466,11 +477,17 @@ class MealCmd():
 
 	def getItem(self, menu, arg, idx):
 		if len(arg) < idx + 1:
-			item_str = self._lo('Please enter the index of %(title)s:') % {
-				'title': self._lo('the selected item')} + '\n'
+			if not menu['items']:
+				self.sendError( self._lo('There is no %(title)s.') % {'title': self._lo('item')} )
+				return None
+
+			item_str = ''
 			for i, item in enumerate(menu['items']):
 				item_str += 'ID:%d %s $%d\n' % (i, item['name'], item['price'])
-			self.sendMessage(item_str)
+			item_str += '\n' + self._lo('Please enter the index of %(title)s:') % {
+							'title': self._lo('the selected item')}
+			for block in fbSplitMessageLine(item_str):
+				self.sendMessage(block)
 			return None
 		elif not arg[idx].isdigit():
 			self.sendWrongFormat( self._lo('Index not integer.') )
@@ -516,13 +533,15 @@ class MealCmd():
 
 		arr = arr[1:]
 		# No op_list
-		if not arr:
-			info_str = self._lo('Please enter the indexs of %(title)s(Split them by blank character(s). Enter single "$" if no options.):') % {
-				'title': self._lo('all the selected options')} + '\n'
+		if not arr and item['opidxs']:
+			info_str = ''
 			for i,opidx in enumerate(item['opidxs']):
 				op = menu['ops'][opidx]
 				info_str += 'ID:%d %s $%d\n' % (i, op['name'], op['price'])
-			self.sendMessage(info_str)
+			info_str += '\n' + self._lo('Please enter the indexs of %(title)s(Split them by blank character(s). Enter single "$" if no options.):') % {
+							'title': self._lo('all the selected options')}
+			for block in fbSplitMessageLine(info_str):
+				self.sendMessage(block)
 			return
 		op_list, arr = self.getSplitList(arr)
 		op_strs = []
@@ -543,12 +562,14 @@ class MealCmd():
 		self.pushCmd('$')
 
 		# No addi_list
-		if not arr:
-			info_str = self._lo('Please enter the indexs of %(title)s(Split them by blank character(s). Enter single "$" if no options.):') % {
-				'title': self._lo('all the selected additional options')} + '\n'
+		if not arr and menu['addis']:
+			info_str = ''
 			for i,addi in enumerate(menu['addis']):
 				info_str += 'ID:%d %s $%d\n' % (i, addi['name'], addi['price'])
-			self.sendMessage(info_str)
+			info_str += '\n' + self._lo('Please enter the indexs of %(title)s(Split them by blank character(s). Enter single "$" if no options.):') % {
+							'title': self._lo('all the selected additional options')}
+			for block in fbSplitMessageLine(info_str):
+				self.sendMessage(block)
 			return
 		addi_list, arr = self.getSplitList(arr)
 		addi_strs = []
@@ -606,8 +627,10 @@ class MealCmd():
 			info_str += self._lo('None') + '\n'
 
 		# TODO : add item string and item price and addis list
-		self.sendSuccess( self._lo('Orders received!\n%(info_str)s\nMeal ID:%(meal_id)s\nOrder:\n  %(order_str)s\nMessage:\n  %(message)s') % {
+		success_str = self._lo('Orders received!\n%(info_str)s\nMeal ID:%(meal_id)s\nOrder:\n  %(order_str)s\nMessage:\n  %(message)s') % {
 				'info_str': info_str,
 				'meal_id': meal['_id'],
 				'order_str': order_string,
-				'message': message} )
+				'message': message}
+		for block in fbSplitMessageLine(success_str):
+			self.sendSuccess(block)

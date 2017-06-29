@@ -92,5 +92,6 @@ Message:
 訊息:
   %(message)s"
 "Meal(ID: %(meal_id)s) stop accepting subscriptions.","訂餐(ID: %(meal_id)s)已經停止接受新的訂單。"
-"There are %(num)d subscriber(s).","共有 %(num)d 個訂餐者。"
+"There are %(num)d subscriber(s).","共有 %(num)d 位訂餐者。"
 "You can view the details in this page:","你可以在這個頁面查看細節。"
+"item","項目"

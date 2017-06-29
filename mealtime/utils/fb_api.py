@@ -10,6 +10,7 @@ import os
 import json
 import base64
 import requests
+import logging
 
 
 # FB_APP_ID = os.environ.get('FB_APP_ID', '')
@@ -26,6 +27,10 @@ def fbRequestPost(url, data):
 			url,
 			headers={"Content-Type": "application/json"},
 			data=json_data)
+	err = req.json().get('error', None)
+	if err:
+		logging.error('FB Send API Error: %s' % err['message'])
+	return err
 
 
 FB_SEND_API_URL = FB_API_BASE + '/me/messages?access_token=%s' % FB_TOKEN
@@ -38,8 +43,21 @@ def fbSendMessage(uid, message):
 			'text': message
 		}
 	}
-	fbRequestPost(FB_SEND_API_URL, data)
-	# TODO : check error message
+	err = fbRequestPost(FB_SEND_API_URL, data)
+	if err and err['code'] == 100 and err['error_subcode'] == '2018109':
+		fbSendMessage(uid, 'Error: Message too long.')
+
+MAX_LEN = 640 - 10
+def fbSplitMessageLine(message, sp_char = '\n'):
+	sp_message = ''
+	for line in message.split(sp_char):
+		if len(sp_message) + len(line) + 1 >= MAX_LEN:
+			# len of single line may >= MAX_LEN
+			yield sp_message
+			sp_message = ''
+		sp_message += line + sp_char
+	if sp_message:
+		yield sp_message
 
 def fbSendHaveRead(uid):
 	data = {
