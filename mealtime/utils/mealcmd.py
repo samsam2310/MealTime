@@ -492,9 +492,11 @@ class MealCmd():
 		cursor = self._db['Order'].find({'meal_id': meal['_id']})
 		for order in cursor:
 			if is_del:
-				noti_str = self._lo('Your order is cancel by the publisher.(Meal ID: %(meal_id)s)') % {'meal_id': meal['_id'] }
+				noti_str = self._lo('Your order is cancel by the publisher.(Meal ID: %(meal_id)s)\nMessage:\n  %(message)s') % {
+					'meal_id': meal['_id'],
+					'message': ann }
 			else:
-				noti_str = self._lo('The meal(ID: %(meal_id)s) has arrived.\nYour order is:\n%(order_string)s\nMessage: %(message)s') % {
+				noti_str = self._lo('The meal(ID: %(meal_id)s) has arrived.\nYour order is:\n%(order_string)s\nMessage:\n  %(message)s') % {
 					'meal_id': meal['_id'],
 					'order_string': order['order_string'],
 					'message': ann }

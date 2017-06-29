@@ -53,14 +53,20 @@ Informations list: %(info_list)s","訂餐(ID: %(meal_id)s):
 "Meal(ID: %(meal_id)s) is %(action)s.
 Notify all subscribers.","訂餐(ID: %(meal_id)s)%(action)s。
 通知所有訂餐者。"
-"Your order is cancel by the publisher.(Meal ID: %(meal_id)s)","你的訂餐(ID: %(meal_id)s)已經被發布者取消。"
+"Your order is cancel by the publisher.(Meal ID: %(meal_id)s)
+Message:
+  %(message)s","你的訂餐(ID: %(meal_id)s)已經被發布者取消。
+訊息:
+  %(message)s"
 "The meal(ID: %(meal_id)s) has arrived.
 Your order is:
 %(order_string)s
-Message: %(message)s","你的訂餐(ID: %(meal_id)s)已經到達。
+Message:
+  %(message)s","你的訂餐(ID: %(meal_id)s)已經到達。
 你的餐點是:
 %(order_string)s
-訊息: %(message)s"
+訊息:
+  %(message)s"
 "the meal id","訂餐ID"
 "Meal id incorrect.","訂餐ID不正確。"
 "Meal do not exist.","這個訂餐不存在。"
