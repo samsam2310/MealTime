@@ -6,6 +6,8 @@
 ### menu
 
 * new menu_name
+* rename menu_idx menu_name
+* list menu_idx
 * show menu_idx
 * del menu_idx
 * edit menu_idx item_list ... $ op_list ... $ addition_list ...

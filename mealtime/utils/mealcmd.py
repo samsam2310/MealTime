@@ -138,7 +138,7 @@ class MealCmd():
 	# ------------------------------------------------------
 	# Menu
 	# ------------------------------------------------------
-	CMD_MENU = ['new', 'show', 'del', 'edit']
+	CMD_MENU = ['new', 'rename', 'list', 'show', 'del', 'edit']
 	def menu(self, arg):
 		subcmd = arg[0] if arg else ''
 		if subcmd in self.CMD_MENU:
@@ -175,16 +175,23 @@ class MealCmd():
 			self.sendWrongFormat( self._lo('Index out of range.') )
 		return menu
 
-	def menu_new(self, arg):
-		if len(arg) < 1:
+	def getMenuName(self, arg, idx):
+		if len(arg) < idx+1:
 			self.sendMessage( self._lo('Please enter %(title)s:') % {'title': self._lo('a name')} )
-			return
-		name = arg[0]
+			return None
+		name = arg[idx]
 		if self._db['Menu'].find_one({
 				'name': name,
 				'owner': self._uid }):
 			self.sendError( self._lo('The name has been used.') )
+			return None
+		return name
+
+	def menu_new(self, arg):
+		name = self.getMenuName(arg, 0)
+		if not name:
 			return
+
 		self._db['Menu'].insert_one({
 				'name': name,
 				'owner': self._uid,
@@ -193,6 +200,30 @@ class MealCmd():
 				'addis': []
 			})
 		self.sendSuccess( self._lo('Menu "%(name)s" successfully created.') % {'name':name})
+
+	def menu_list(self, arg):
+		cursor = self._db['Menu'].find({ 'owner': self._uid }, sort=[('name', 1)])
+		if cursor.clone().count() == 0:
+			self.sendSuccess( self._lo('There is no %(title)s.') % {'title': self._lo('menu')} )
+			return
+		menu_list_str = self._lo('Menu:') + '\n'
+		for i, menu in enumerate(cursor):
+			menu_list_str += 'ID:%d %s\n' % (i, menu['name'])
+		for block in fbSplitMessageLine(menu_list_str):
+			self.sendSuccess(block)
+
+	def menu_rename(self, arg):
+		menu = self.getMenu(arg, 0)
+		if not menu:
+			return
+
+		name = self.getMenuName(arg, 1)
+		if not name:
+			return
+
+		self._db['Menu'].update_one({'_id': menu['_id']}, {'$set':{'name': name } })
+		self.sendSuccess( self._lo('Menu "%(origin_name)s" renamed "%(name)s".') % {
+			'origin_name':menu['name'], 'name':name})
 
 	def menu_show(self, arg):
 		menu = self.getMenu(arg, 0)
@@ -225,7 +256,7 @@ class MealCmd():
 			menu_raw_str += '%s|%d ' % (op['name'], op['price'])
 		menu_raw_str += '$ '
 		for addi in menu['addis']:
-			menu_raw_str += '%s|%d ' % (addi['name'], op['price'])
+			menu_raw_str += '%s|%d ' % (addi['name'], addi['price'])
 		for block in fbSplitMessageLine(menu_raw_str, ' '):
 			self.sendSuccess(block)
 
@@ -404,7 +435,6 @@ class MealCmd():
 			'info_list': ' '.join(info_titles) })
 		self.sendSuccess( self._lo('People can order the meal by this link:') + '\n' + fbGetMMeLink('order %s' % res.inserted_id) )
 
-
 	def meal_show(self, arg):
 		meal = self.getMeal(arg, 0)
 		if not meal:
@@ -544,7 +574,7 @@ class MealCmd():
 			if len(info_list) > len(meal['infos']):
 				self.sendError( self._lo('Command format error.') )
 			else:
-				self.sendMessage( self._lo('Please enter your "%(title)s":') % {'title': meal['infos'][len(info_list)] } )
+				self.sendMessage( self._lo('Please enter your "%(title)s" (Do not contain space.):') % {'title': meal['infos'][len(info_list)] } )
 			return
 		self.pushCmd('$')
 
