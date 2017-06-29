@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mealtime',
-    version='0.1.0b1',
+    version='0.1.0b2',
     author='Sam Wu',
     author_email='samsam2310@gmail.com',
     packages=find_packages(),
