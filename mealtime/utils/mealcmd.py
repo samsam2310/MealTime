@@ -237,13 +237,17 @@ class MealCmd():
 				op = menu['ops'][opidx]
 				op_str += ' %s $%d' % (op['name'], op['price'])
 			if not op_str:
-				op_str = self._lo('No option.')
+				op_str = self._lo('There is no %(title)s.') % {'title': self._lo('option')}
 			menu_str += '%d. %s $%d (%s )\n' % (i, item['name'], item['price'], op_str)
+		if not menu['items']:
+			menu_str += '  ' + self._lo('There is no %(title)s.') % {'title': self._lo('item')} + '\n'
+
 		menu_str += self._lo('Additional options:') + '\n'
 		for addi in menu['addis']:
 			menu_str += '%s $%d ;' % (addi['name'], addi['price'])
 		if not menu['addis']:
-			menu_str += self._lo('No additional option.')
+			menu_str += '  ' + self._lo('There is no %(title)s.') % {'title': self._lo('additional option')}
+
 		for block in fbSplitMessageLine(menu_str):
 			self.sendMessage(block)
 
@@ -343,7 +347,7 @@ class MealCmd():
 	# ------------------------------------------------------
 	# Meal
 	# ------------------------------------------------------
-	CMD_MEAL = ['new', 'show', 'done', 'del']
+	CMD_MEAL = ['new', 'show', 'stop', 'done', 'del']
 	def meal(self, arg):
 		subcmd = arg[0] if arg else ''
 		if subcmd in self.CMD_MEAL:
@@ -464,7 +468,7 @@ class MealCmd():
 
 		now_time = datetime.utcnow()
 		self._db['Meal'].update_one({'_id': meal['_id']}, {'$set': {'stop_time': now_time}})
-		self.sendSuccess( self._lo('Meal(ID: %(meal_id)s) stop accepting subscriptions.') )
+		self.sendSuccess( self._lo('Meal(ID: %(meal_id)s) stop accepting subscriptions.') % {'meal_id': meal['_id']})
 
 	def meal_done(self, arg, is_del=False):
 		meal = self.getMeal(arg, 0)

@@ -14,7 +14,7 @@ import logging
 from tornado.ioloop import IOLoop
 from tornado.web import Application
 from tornado.httpserver import HTTPServer
-from tornado.netutil import bind_unix_socket
+# from tornado.netutil import bind_unix_socket
 from datetime import datetime
 
 
