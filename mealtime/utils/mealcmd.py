@@ -436,7 +436,7 @@ class MealCmd():
 			'start_time': self._lo.fromDatetime(start_time, '%Y-%m-%d-%H:%M'),
 			'stop_time': self._lo.fromDatetime(stop_time, '%Y-%m-%d-%H:%M'),
 			'meal_time': self._lo.fromDatetime(meal_time, '%Y-%m-%d-%H:%M'),
-			'info_list': ' '.join(info_titles) })
+			'info_list': ' '.join(info_titles) if info_titles else self._lo('None') })
 		self.sendSuccess( self._lo('People can order the meal by this link:') + '\n' + fbGetMMeLink('order %s' % res.inserted_id) )
 
 	def meal_show(self, arg):
