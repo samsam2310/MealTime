@@ -39,7 +39,7 @@ Menu Name: %(menu_name)s
 Start at: %(start_time)s
 Stop at: %(stop_time)s
 Meal time: %(meal_time)s
-Informations list: %(info_list)s","訂餐(ID: %(meal_id)s):
+Information list: %(info_list)s","訂餐(ID: %(meal_id)s):
 菜單名稱: %(menu_name)s
 開始於: %(start_time)s
 結束於: %(stop_time)s
@@ -104,3 +104,6 @@ Message:
 "There are %(num)d subscriber(s).","共有 %(num)d 位訂餐者。"
 "You can view the details in this page:","你可以在這個頁面查看細節。"
 "I can only handle the file which size less than 1MB. QAQ","我只能處理大小小於1MB的文件。QAQ"
+"Orderer Infomation:","訂餐者訊息:"
+"This meal do not reach the stop time yet, do you want to stop it early?(Y/N)","這個訂餐還沒到達收單時間，請問你要提前收單嗎？(Y/N)"
+"Command cancel.","指令取消。"

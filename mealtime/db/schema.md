@@ -23,6 +23,7 @@
 * start_time: time.
 * stop_time: time.
 * meal_time: time.
+* fb_csv_id: id of fb csv file.
 * is_done(Boolean): is active or not.
 
 # Order

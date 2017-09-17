@@ -16,11 +16,10 @@ import logging
 import base64
 import binascii
 
-from .base import BaseApiHandler
+from .base import BasePageHandler
 from ..db import get_db
 
-
-class MealHandler(BaseApiHandler):
+class MealHandler(BasePageHandler):
 	def get(self, key):
 		meal_id_obj = ObjectId(key) if ObjectId.is_valid(key) else None
 		meal = self._db['Meal'].find_one({'_id': meal_id_obj, 'is_done': False}) if meal_id_obj else None
