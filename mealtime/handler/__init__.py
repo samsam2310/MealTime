@@ -13,7 +13,8 @@ __all__ = ['route']
 
 class DefaultHandler(BaseApiHandler):
 	def get(self):
-		self.write_success({'message': 'hi!'})
+		self.render('index.html')
+		# self.write_success({'message': 'hi!'})
 
 
 route = [
