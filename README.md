@@ -1,5 +1,13 @@
 # MealTime
 
+## Development
+
+Run `tool/install-hook` to install git-hooks.
+Install yapf: `pip install yapf`.
+Run `tool/format` to format Python code before push.
+
+## Build
+`python setup.py install`
 
 ## Command
 

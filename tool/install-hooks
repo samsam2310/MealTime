@@ -1,0 +1,15 @@
+#!/bin/sh
+
+ROOT="$(git rev-parse --show-toplevel)"
+HOOKS="$(ls ${ROOT}/githooks)"
+HOOK_DIR=$(git rev-parse --show-toplevel)/.git/hooks
+
+for hook in $HOOKS; do
+    # If the hook already exists, is executable, and is not a symlink
+    # Note: local hook won't be run.
+    if [ ! -h $HOOK_DIR/$hook -a -x $HOOK_DIR/$hook ]; then
+        mv $HOOK_DIR/$hook $HOOK_DIR/$hook.local
+    fi
+    # create the symlink, overwriting the file if it exists
+    ln -s -f ../../githooks/$hook $HOOK_DIR/$hook
+done
