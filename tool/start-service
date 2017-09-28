@@ -3,25 +3,18 @@
 cd `dirname $0`'/..'
 echo $PWD
 
-
 . ./.env
 
 webpack_cmd="./node_modules/.bin/webpack"
 server_cmd="python -m mealtime.app"
 
-
 if [ "$1" == "--dev" ]; then
 	DEBUG_MODE=True
 	$webpack_cmd --watch &
-	webpack_pid=$!
-	$server_cmd
-	wait $webpack_pid
+	$server_cmd &
+	wait
 else
 	DEBUG_MODE=False
 	$webpack_cmd
 	$server_cmd
 fi
-
-
-
-
