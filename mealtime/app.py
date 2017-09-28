@@ -29,7 +29,7 @@ def make_app():
 	return Application(
 		handlers = route,
 		template_path = os.path.join(os.path.dirname(__file__), 'template'),
-		static_path = os.path.join(os.path.dirname(__file__), 'static'),
+		static_path = os.path.join(os.path.dirname(__file__), '../public'),
 		debug = DEBUG_MODE,
 		autoreload = False
 	)
