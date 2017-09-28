@@ -47,6 +47,7 @@ fi
 changed_files=`git diff ${remote_branch} --name-only`
 js_files=`echo ${changed_files} | tr ' ' '\n' | grep -E *.jsx?$`
 if [ $? -eq 0 ]; then
+	js_files=`echo "$js_files" | tr '\n' ' '`
 	$prettier_cmd $prettier_arg $js_files > /dev/null
 	prettier_res="$?"
 	if [ "$is_check_mode" != "" ] && [ "$prettier_res" -ne 0 ]; then
@@ -56,6 +57,7 @@ fi
 
 python_files=`echo ${changed_files} | tr ' ' '\n' | grep -E *.py$`
 if [ $? -eq 0 ]; then
+	python_files=`echo "$python_files" | tr '\n' ' '`
 	$yapf_cmd $python_files $yapf_arg > /dev/null
 	yapf_res="$?"
 	if [ "$is_check_mode" != "" ] && [ "$yapf_res" -ne 0 ]; then
