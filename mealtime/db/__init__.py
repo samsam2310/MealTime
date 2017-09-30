@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """ DB - init
 """
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-
 from pymongo import MongoClient
 
 import os
 
+from .user import User
 
-__all__ = ['get_db',]
+__all__ = [
+    'get_db',
+]
 
-
-DB_HOST		= os.environ.get('DB_HOST', 'localhost:27017').split(",")
-DB_REPLSET	= os.environ.get('DB_REPLSET', None)
-DB_USER		= os.environ.get('DB_USER', '')
-DB_PWD		= os.environ.get('DB_PWD', '')
-DB_NAME		= os.environ.get('DB_NAME', 'mealtime')
+DB_HOST = os.environ.get('DB_HOST', 'localhost:27017').split(",")
+DB_REPLSET = os.environ.get('DB_REPLSET', None)
+DB_USER = os.environ.get('DB_USER', '')
+DB_PWD = os.environ.get('DB_PWD', '')
+DB_NAME = os.environ.get('DB_NAME', 'mealtime')
 
 
 def get_db(show_detail=False):
