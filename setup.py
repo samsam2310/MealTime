@@ -11,7 +11,9 @@ setup(
     author='Sam Wu',
     author_email='samsam2310@gmail.com',
     packages=find_packages(),
-    install_requires=['pymongo',
-                      'tornado',
-                      'requests'],
-)
+    install_requires=[
+        'pymongo',
+        'tornado',
+        'requests',
+        'yapf',
+    ])
