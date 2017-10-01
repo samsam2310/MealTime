@@ -14,5 +14,5 @@ setup(
     install_requires=['pymongo',
                       'tornado',
                       'requests',
-					  'yapf'],
+					  'yapf']
 )
