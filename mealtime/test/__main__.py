@@ -16,8 +16,6 @@ CLEAR_ENVIRONS = [
     'DB_USER',
     'DB_PWD',
     'DB_NAME',
-    'TEST_DB_HOST',
-    'TEST_DB_NAME',
     'FB_WEBHOOK_TOKEN',
     'FB_APP_ID',
     'FB_APP_SECRET',
